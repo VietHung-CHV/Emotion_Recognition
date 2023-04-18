@@ -2,26 +2,10 @@ import os
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
-import cv2
+
 from PIL import Image
-from random import shuffle
-import seaborn as sns
-import pandas as pd
 
-import pickle
-
-from sklearn.svm import SVC,LinearSVC
-from sklearn.ensemble import RandomForestClassifier, BaggingClassifier,ExtraTreesClassifier
-from sklearn import svm,metrics,preprocessing
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn import preprocessing
-
-import glob
-from itertools import chain
 import os
-import random
-import zipfile
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,9 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from PIL import Image
-from sklearn.model_selection import train_test_split
-from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader, Dataset
+
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
