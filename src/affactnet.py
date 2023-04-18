@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 from PIL import Image
 from random import shuffle
-
+import seaborn as sns
 import pandas as pd
 
 import pickle
@@ -40,7 +40,7 @@ from tqdm import tqdm
 
 print(f"Torch: {torch.__version__}")
 
-ALL_DATA_DIR = 'D:/1Hung/01_DATN/Code/face-emotion-recognition/datasets/'
+ALL_DATA_DIR = '../custom_datasets/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
 TEST_DIR = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
@@ -79,7 +79,7 @@ seed = 42
 device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
-
+# use_cuda = False
 #net_description='affectnet_'+net_description
 train_dir,test_dir=TRAIN_DIR,TEST_DIR#AFFECT_TRAIN_DATA_DIR,AFFECT_VAL_DATA_DIR
 #train_dir,test_dir=AFFECT_IMG_TRAIN_DATA_DIR,AFFECT_IMG_VAL_DATA_DIR
@@ -129,6 +129,7 @@ test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, 
 print(len(train_dataset), len(test_dataset))
 
 (unique, counts) = np.unique(train_dataset.targets, return_counts=True)
+(_, counts_test) = np.unique(test_dataset.targets, return_counts=True)
 cw=1/counts
 cw/=cw.min()
 class_weights = {i:cwi for i,cwi in zip(unique,cw)}
@@ -138,7 +139,7 @@ num_classes=len(train_dataset.classes)
 print(num_classes)
 
 # loss function
-weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda else torch.FloatTensor(list(class_weights.values()))
+weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda==True else torch.FloatTensor(list(class_weights.values()))
 if False:
     criterion = nn.CrossEntropyLoss(weight=weights)
     #criterion = nn.CrossEntropyLoss()
@@ -214,7 +215,7 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             epoch_val_accuracy = 0
             epoch_val_loss = 0
             for data, label in test_loader:
-                if use_cuda:
+                if use_cuda ==True:
                     data = data.to(device)
                     label = label.to(device)
 
@@ -242,8 +243,9 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             epoch_val_accuracy = 0
             epoch_val_loss = 0
             for data, label in test_loader:
-                data = data.to(device)
-                label = label.to(device)
+                if use_cuda:
+                    data = data.to(device)
+                    label = label.to(device)
 
                 val_output = model(data)
                 val_loss = criterion(val_output, label)
@@ -266,7 +268,7 @@ import timm
 
 model=timm.create_model('tf_efficientnet_b0_ns', pretrained=False)
 model.classifier=torch.nn.Identity()
-if use_cuda:
+if use_cuda==True:
     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
 else:
     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt', map_location=torch.device('cpu'))) #_new
@@ -274,84 +276,87 @@ else:
 model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes)) #1792 #1280 #1536
 #model.head.fc=nn.Linear(in_features=3072, out_features=num_classes)
 #model.head=nn.Sequential(nn.Linear(in_features=768, out_features=num_classes))
-# model=model.to(device)
+if use_cuda:
+    model=model.to(device)
 # print(model)
 
-set_parameter_requires_grad(model, requires_grad=False)
-set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,3,0.001,robust=True)
-# #Best acc:0.48875007033348083
-# #7: Best acc:0.558712363243103
+# set_parameter_requires_grad(model, requires_grad=False)
+# set_parameter_requires_grad(model.classifier, requires_grad=True)
+# train(model,3,0.001,robust=True)
+#Best acc:0.48875007033348083
+#7: Best acc:0.558712363243103
+#5: Best acc:0.6665414571762085
 
 # set_parameter_requires_grad(model, requires_grad=True)
 # train(model,6,1e-4,robust=True)
 
-# if USE_ENET2:
-#     if False: # 7 emotions
-#         PATH='../../models/affectnet_emotions/enet_b2_7.pt'
-#         model_name='enet2_7_pt'
-#     else:
-#         #PATH='../../models/affectnet_emotions/enet_b2_8.pt'
-#         PATH='../../models/affectnet_emotions/enet_b2_8_best.pt'
-#         model_name='enet2_8_pt'
-# else:
-#     if False: # 7 emotions from AFFECT_IMG_SEVEN_TRAIN_DATA_DIR and AFFECT_IMG_SEVEN_VAL_DATA_DIR
-#         PATH='../../models/affectnet_emotions/enet_b0_7.pt'
-#         model_name='enet0_7_pt'
-#     else:
-#         PATH='../../models/affectnet_emotions/enet_b0_8_best_vgaf.pt'
-#         #PATH='../../models/affectnet_emotions/enet_b0_8_best_afew.pt'
-#         model_name='enet0_8_pt'
-# print(PATH)
+if USE_ENET2:
+    if False: # 7 emotions
+        PATH='../models/affectnet_emotions/enet_b2_7.pt'
+        model_name='enet2_7_pt'
+    else:
+        #PATH='../models/affectnet_emotions/enet_b2_8.pt'
+        PATH='../models/affectnet_emotions/enet_b2_5_best.pt'
+        model_name='enet2_5_pt'
+else:
+    if False: # 7 emotions from AFFECT_IMG_SEVEN_TRAIN_DATA_DIR and AFFECT_IMG_SEVEN_VAL_DATA_DIR
+        PATH='../models/affectnet_emotions/enet_b0_7.pt'
+        model_name='enet0_7_pt'
+    else:
+        PATH='../models/affectnet_emotions/enet_b0_5_best_vgaf.pt'
+        #PATH='../models/affectnet_emotions/enet_b0_8_best_afew.pt'
+        model_name='enet0_5_pt'
+print(PATH)
 
-# # Save
+# Save
 # torch.save(model, PATH)
 
 
-# # Load
-# print(PATH)
-# model = torch.load(PATH)
-# model=model.eval()
+# Load
+print(PATH)
+model = torch.load(PATH)
+model=model.eval()
 
-# class_to_idx=train_dataset.class_to_idx
-# print(class_to_idx)
-# idx_to_class={idx:cls for cls,idx in class_to_idx.items()}
-# print(idx_to_class)
+class_to_idx=train_dataset.class_to_idx
+print(class_to_idx)
+idx_to_class={idx:cls for cls,idx in class_to_idx.items()}
+print(idx_to_class)
 
-# print(test_dir)
-# y_val,y_scores_val=[],[]
-# model.eval()
-# for class_name in tqdm(os.listdir(test_dir)):
-#     if class_name in class_to_idx:
-#         class_dir=os.path.join(test_dir,class_name)
-#         y=class_to_idx[class_name]
-#         for img_name in os.listdir(class_dir):
-#             filepath=os.path.join(class_dir,img_name)
-#             img = Image.open(filepath)
-#             img_tensor = test_transforms(img)
-#             img_tensor.unsqueeze_(0)
-#             scores = model(img_tensor.to(device))
-#             scores=scores[0].data.cpu().numpy()
-#             #print(scores.shape)
-#             y_scores_val.append(scores)
-#             y_val.append(y)
+print(f'testd_dir: {test_dir}')
+y_val,y_scores_val=[],[]
+model.eval()
+for class_name in tqdm(os.listdir(test_dir)):
+    if class_name in class_to_idx:
+        class_dir=os.path.join(test_dir,class_name)
+        y=class_to_idx[class_name]
+        for img_name in os.listdir(class_dir):
+            filepath=os.path.join(class_dir,img_name)
+            img = Image.open(filepath)
+            img_tensor = test_transforms(img)
+            
+            img_tensor.unsqueeze_(0)
+            scores = model(img_tensor.to(device))
+            scores=scores[0].data.cpu().numpy()
+            #print(scores.shape)
+            y_scores_val.append(scores)
+            y_val.append(y)
 
-# y_scores_val=np.array(y_scores_val)
-# y_val=np.array(y_val)
-# print(y_scores_val.shape,y_val.shape)
+y_scores_val=np.array(y_scores_val)
+y_val=np.array(y_val)
+print(y_scores_val.shape,y_val.shape)
 
-# y_pred=np.argmax(y_scores_val,axis=1)
-# acc=100.0*(y_val==y_pred).sum()/len(y_val)
-# print(acc)
+y_pred=np.argmax(y_scores_val,axis=1)
+acc=100.0*(y_val==y_pred).sum()/len(y_val)
+print(acc)
 
-# y_train=np.array(train_dataset.targets)
+y_train=np.array(train_dataset.targets)
 
-# for i in range(y_scores_val.shape[1]):
-#     _val_acc=(y_pred[y_val==i]==i).sum()/(y_val==i).sum()
-#     print('%s %d/%d acc: %f' %(idx_to_class[i],(y_train==i).sum(),(y_val==i).sum(),100*_val_acc))
+for i in range(y_scores_val.shape[1]):
+    _val_acc=(y_pred[y_val==i]==i).sum()/(y_val==i).sum()
+    print('%s %d/%d acc: %f' %(idx_to_class[i],(y_train==i).sum(),(y_val==i).sum(),100*_val_acc))
     
-# #-Contempt
-# сontempt_idx=class_to_idx['Contempt']
+#-Contempt
+# сontempt_idx=class_to_idx['angry']
 # y_scores_val_filtered=y_scores_val[:, [i!=сontempt_idx for i in idx_to_class]]
 # print(y_scores_val_filtered.shape)
 # y_pred_filtered=np.argmax(y_scores_val_filtered,axis=1)
@@ -360,19 +365,32 @@ train(model,3,0.001,robust=True)
 # acc=100.0*np.mean(y_val_new==y_pred_filtered[other_indices])
 # print(acc)
 
-# labels=list(class_to_idx.keys())
-# print(labels)
-# IC = type('IdentityClassifier', (), {"predict": lambda i : i, "_estimator_type": "classifier"})
-# import matplotlib.pyplot as plt
-# from sklearn.metrics import plot_confusion_matrix
-# def plt_conf_matrix(y_true,y_pred,labels):
-#     print(y_pred.shape,y_true.shape, (y_pred==y_true).mean())
+labels=list(class_to_idx.keys())
+print(labels)
 
-#     fig, ax = plt.subplots(figsize=(8, 8))
-#     plot_confusion_matrix(IC, y_pred,y_true,display_labels=labels,cmap=plt.cm.Blues,ax=ax,colorbar=False) #,normalize='true'
-#     plt.tight_layout()
-#     plt.show()
-# plt_conf_matrix(y_val,y_pred,labels)
+plt.subplot()
+plt.bar(labels, counts, 0.5)
+plt.suptitle('Custom Dataset - Training')
+plt.savefig('../res/train_dts.jpg')
+plt.clf()
+plt.subplot()
+plt.bar(labels, counts_test, 0.5)
+plt.suptitle('Custom Dataset - Testing')
+plt.savefig('../res/test_dts.jpg')
+plt.clf()
+IC = type('IdentityClassifier', (), {"predict": lambda i : i, "_estimator_type": "classifier"})
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+def plt_conf_matrix(y_true,y_pred,labels):
+    print(y_pred.shape,y_true.shape, (y_pred==y_true).mean())
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    # plot_confusion_matrix(IC, y_pred,y_true,display_labels=labels,cmap=plt.cm.Blues,ax=ax,colorbar=False) #,normalize='true'
+    ConfusionMatrixDisplay.from_estimator(IC, y_pred,y_true,display_labels=labels,cmap=plt.cm.Blues,ax=ax,colorbar=False)
+    plt.tight_layout()
+    plt.savefig('../res/confusion_matrix.jpg')
+    # plt.show()
+plt_conf_matrix(y_val,y_pred,labels)
 
 # labels_7=[idx_to_class[i] for i in idx_to_class if i!=сontempt_idx]#list(class_to_idx.keys())
 # print(labels_7)
