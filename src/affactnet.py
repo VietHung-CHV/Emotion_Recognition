@@ -269,8 +269,10 @@ if use_cuda:
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085
 
-# set_parameter_requires_grad(model, requires_grad=True)
-# train(model,6,1e-4,robust=True)
+set_parameter_requires_grad(model, requires_grad=True)
+train(model,6,1e-4,robust=True)
+#Best acc:0.8260869383811951
+#val_loss : 0.0212 - val_acc: 0.8261
 
 if USE_ENET2:
     if False: # 7 emotions
@@ -291,7 +293,7 @@ else:
 print(PATH)
 
 # Save
-# torch.save(model, PATH)
+torch.save(model, PATH)
 
 
 # Load
