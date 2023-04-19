@@ -202,6 +202,7 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
 import timm
 model=timm.create_model('efficientnet_b0', pretrained=False)
 model.classifier=torch.nn.Identity()
+model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt'))
 model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes))
 model=model.to(device)
 # print(model)
