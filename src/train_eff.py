@@ -27,7 +27,7 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../custom_datasets/'
+ALL_DATA_DIR = '../01_Custom_dts/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
 TEST_DIR = ALL_DATA_DIR + 'test'
 train_dir,test_dir=TRAIN_DIR,TEST_DIR
@@ -202,17 +202,17 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
 import timm
 model=timm.create_model('efficientnet_b0', pretrained=False)
 model.classifier=torch.nn.Identity()
-model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt'))
+
 model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes))
 model=model.to(device)
 # print(model)
 
-set_parameter_requires_grad(model, requires_grad=False)
-set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,3,0.001,robust=True)
+# set_parameter_requires_grad(model, requires_grad=False)
+# set_parameter_requires_grad(model.classifier, requires_grad=True)
+train(model,13,0.001,robust=True)
 
-set_parameter_requires_grad(model, requires_grad=True)
-train(model,9,1e-4,robust=True)
+# set_parameter_requires_grad(model, requires_grad=True)
+# train(model,9,1e-4,robust=True)
 
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
