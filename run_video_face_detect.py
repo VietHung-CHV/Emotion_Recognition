@@ -106,14 +106,20 @@ while True:
     for i in range(boxes.size(0)):
         box = boxes[i, :]
         label = f" {probs[i]:.2f}"
-        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         x = int(box[0])
         y = int(box[1])
-        w = int(box[2])+10 - int(box[0])
+        w = int(box[2]) - int(box[0])
         h = int(box[3]) - int(box[1])
         aa = max(w, h)
-        face = orig_image[y:int(box[3]), x:int(box[2])]
+        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
+        # x = int(box[0])
+        # y = int(box[1])
+        # w = int(box[2]) - int(box[0])
+        # h = int(box[3]) - int(box[1])
+        # aa = max(w, h)
+        face = orig_image[y:int(box[1])+aa, x:int(box[0])+aa]
         im = Image.fromarray(np.uint8(face))
+        im = im.resize((128,128))
         # face = cv2.resize(face, (48,48)) 
         # face = face/255.0
         # print(im.size)
