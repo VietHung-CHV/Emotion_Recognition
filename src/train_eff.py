@@ -27,15 +27,16 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../01_Emotion/'
+ALL_DATA_DIR = '../custom_datasets/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
-TEST_DIR = ALL_DATA_DIR + 'test'
+TEST_DIR = '../01_Emotion/' + 'test'
 train_dir,test_dir=TRAIN_DIR,TEST_DIR
 IMG_SIZE = 128
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
-        transforms.GaussianBlur(kernel_size=(9,9), sigma=(0.1, 5)),
+        # transforms.GaussianBlur(kernel_size=(7,9), sigma=(0.1, 5)),
+        # transforms.RandomVerticalFlip(p=0.5),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
