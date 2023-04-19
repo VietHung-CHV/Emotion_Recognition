@@ -30,7 +30,7 @@ TEST_DIR = ALL_DATA_DIR + 'test'
 
 # Training settings
 batch_size = 32 #64 #48# 32# 32 #16 #8 #
-epochs = 8 #40
+epochs = 15 #40
 lr = 3e-5
 gamma = 0.7
 seed = 42
@@ -224,7 +224,7 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
 import timm
 
 model=timm.create_model('efficientnet_b0', pretrained=False)
-# model.classifier=torch.nn.Identity()
+model.classifier=torch.nn.Identity()
 # if use_cuda==True:
 #     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
 #     # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt'))
