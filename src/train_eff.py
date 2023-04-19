@@ -35,7 +35,7 @@ IMG_SIZE = 128
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
-        transforms.GaussianBlur(kernel_size=(5,9), sigma=(0.1, 5)),
+        transforms.GaussianBlur(kernel_size=(9,9), sigma=(0.1, 5)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
