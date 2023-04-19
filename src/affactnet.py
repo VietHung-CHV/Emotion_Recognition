@@ -29,8 +29,8 @@ TEST_DIR = ALL_DATA_DIR + 'test'
 
 
 # Training settings
-batch_size = 64 #48# 32# 32 #16 #8 #
-epochs = 40
+batch_size = 32 #64 #48# 32# 32 #16 #8 #
+epochs = 8 #40
 lr = 3e-5
 gamma = 0.7
 seed = 42
@@ -98,39 +98,39 @@ print(num_classes)
 
 # loss function
 weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda==True else torch.FloatTensor(list(class_weights.values()))
-if False:
-    criterion = nn.CrossEntropyLoss(weight=weights)
+# if False:
+criterion = nn.CrossEntropyLoss(weight=weights)
     #criterion = nn.CrossEntropyLoss()
-else:
-    def label_smooth(target, n_classes: int, label_smoothing=0.1):
-        # convert to one-hot
-        batch_size = target.size(0)
-        target = torch.unsqueeze(target, 1)
-        soft_target = torch.zeros((batch_size, n_classes), device=target.device)
-        soft_target.scatter_(1, target, 1)
-        # label smoothing
-        soft_target = soft_target * (1 - label_smoothing) + label_smoothing / n_classes
-        return soft_target
+# else:
+#     def label_smooth(target, n_classes: int, label_smoothing=0.1):
+#         # convert to one-hot
+#         batch_size = target.size(0)
+#         target = torch.unsqueeze(target, 1)
+#         soft_target = torch.zeros((batch_size, n_classes), device=target.device)
+#         soft_target.scatter_(1, target, 1)
+#         # label smoothing
+#         soft_target = soft_target * (1 - label_smoothing) + label_smoothing / n_classes
+#         return soft_target
 
-    def cross_entropy_loss_with_soft_target(pred, soft_target):
-        #logsoftmax = nn.LogSoftmax(dim=-1)
-        return torch.mean(torch.sum(- weights*soft_target * torch.nn.functional.log_softmax(pred, -1), 1))
+#     def cross_entropy_loss_with_soft_target(pred, soft_target):
+#         #logsoftmax = nn.LogSoftmax(dim=-1)
+#         return torch.mean(torch.sum(- weights*soft_target * torch.nn.functional.log_softmax(pred, -1), 1))
 
-    def cross_entropy_with_label_smoothing(pred, target):
-        soft_target = label_smooth(target, pred.size(1)) #num_classes) #
-        return cross_entropy_loss_with_soft_target(pred, soft_target)
+#     def cross_entropy_with_label_smoothing(pred, target):
+#         soft_target = label_smooth(target, pred.size(1)) #num_classes) #
+#         return cross_entropy_loss_with_soft_target(pred, soft_target)
 
-    criterion=cross_entropy_with_label_smoothing
+#     criterion=cross_entropy_with_label_smoothing
     
 from robust_optimization import RobustOptimizer
 import copy
 def train(model,n_epochs=epochs, learningrate=lr, robust=False):
     # optimizer
-    if robust:
-        optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
-        #print(optimizer)
-    else:
-        optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
+    # if robust:
+    #     optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
+    #     #print(optimizer)
+    # else:
+    optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
     # scheduler
     #scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
     best_acc=0
@@ -147,20 +147,20 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             output = model(data)
             loss = criterion(output, label)
 
-            if robust:
-                #optimizer.zero_grad()
-                loss.backward()
-                optimizer.first_step(zero_grad=True)
+            # if robust:
+            #     #optimizer.zero_grad()
+            #     loss.backward()
+            #     optimizer.first_step(zero_grad=True)
   
-                # second forward-backward pass
-                output = model(data)
-                loss = criterion(output, label)
-                loss.backward()
-                optimizer.second_step(zero_grad=True)
-            else:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            #     # second forward-backward pass
+            #     output = model(data)
+            #     loss = criterion(output, label)
+            #     loss.backward()
+            #     optimizer.second_step(zero_grad=True)
+            # else:
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             acc = (output.argmax(dim=1) == label).float().sum()
             epoch_accuracy += acc
@@ -221,16 +221,15 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
         
 """FINETUNE CNN"""
 
-from torchvision.models import resnet101,mobilenet_v2
 import timm
 
-model=timm.create_model('tf_efficientnet_b0_ns', pretrained=False)
-model.classifier=torch.nn.Identity()
-if use_cuda==True:
-    model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
-    # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt'))
-else:
-    model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt', map_location=torch.device('cpu'))) #_new
+model=timm.create_model('efficientnet_b0', pretrained=False)
+# model.classifier=torch.nn.Identity()
+# if use_cuda==True:
+#     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
+#     # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt'))
+# else:
+#     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt', map_location=torch.device('cpu'))) #_new
     # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt', map_location=torch.device('cpu'))) #_new
 
 model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes)) #1792 #1280 #1536
@@ -238,11 +237,11 @@ model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_clas
 #model.head=nn.Sequential(nn.Linear(in_features=768, out_features=num_classes))
 if use_cuda:
     model=model.to(device)
-# print(model)
+print(model)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-# train(model,3,0.001,robust=True)
+train(model,epochs,0.001,robust=True)
 #Best acc:0.48875007033348083
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085
@@ -252,34 +251,34 @@ if use_cuda:
 #Best acc:0.8260869383811951
 #val_loss : 0.0212 - val_acc: 0.8261
 
-set_parameter_requires_grad(model, requires_grad=False)
-set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model, 6, 0.001,robust=True)
+# set_parameter_requires_grad(model, requires_grad=False)
+# set_parameter_requires_grad(model.classifier, requires_grad=True)
+# train(model, 6, 0.001,robust=True)
 
-if USE_ENET2:
-    if False: # 7 emotions
-        PATH='../models/affectnet_emotions/enet_b2_7.pt'
-        model_name='enet2_7_pt'
-    else:
-        #PATH='../models/affectnet_emotions/enet_b2_8.pt'
-        PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
-        model_name='enet0_5_pt'
-else:
-    if False: # 7 emotions from AFFECT_IMG_SEVEN_TRAIN_DATA_DIR and AFFECT_IMG_SEVEN_VAL_DATA_DIR
-        PATH='../models/affectnet_emotions/enet_b0_7.pt'
-        model_name='enet0_7_pt'
-    else:
-        PATH='../models/affectnet_emotions/enet_b0_5_best_vgaf.pt'
-        #PATH='../models/affectnet_emotions/enet_b0_8_best_afew.pt'
-        model_name='enet0_5_pt'
-print(PATH)
-
+# if USE_ENET2:
+#     if False: # 7 emotions
+#         PATH='../models/affectnet_emotions/enet_b2_7.pt'
+#         model_name='enet2_7_pt'
+#     else:
+#         #PATH='../models/affectnet_emotions/enet_b2_8.pt'
+#         PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
+#         model_name='enet0_5_pt'
+# else:
+#     if False: # 7 emotions from AFFECT_IMG_SEVEN_TRAIN_DATA_DIR and AFFECT_IMG_SEVEN_VAL_DATA_DIR
+#         PATH='../models/affectnet_emotions/enet_b0_7.pt'
+#         model_name='enet0_7_pt'
+#     else:
+#         PATH='../models/affectnet_emotions/enet_b0_5_best_vgaf.pt'
+#         #PATH='../models/affectnet_emotions/enet_b0_8_best_afew.pt'
+#         model_name='enet0_5_pt'
+# print(PATH)
+PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
 torch.save(model, PATH)
-
+print(model)
 
 # Load
-print(PATH)
+# print(PATH)
 model = torch.load(PATH)
 model=model.eval()
 
@@ -321,15 +320,6 @@ for i in range(y_scores_val.shape[1]):
     _val_acc=(y_pred[y_val==i]==i).sum()/(y_val==i).sum()
     print('%s %d/%d acc: %f' %(idx_to_class[i],(y_train==i).sum(),(y_val==i).sum(),100*_val_acc))
     
-#-Contempt
-# сontempt_idx=class_to_idx['angry']
-# y_scores_val_filtered=y_scores_val[:, [i!=сontempt_idx for i in idx_to_class]]
-# print(y_scores_val_filtered.shape)
-# y_pred_filtered=np.argmax(y_scores_val_filtered,axis=1)
-# other_indices=y_val!=сontempt_idx
-# y_val_new=np.array([y if y<сontempt_idx else y-1 for y in y_val if y!=сontempt_idx])
-# acc=100.0*np.mean(y_val_new==y_pred_filtered[other_indices])
-# print(acc)
 
 labels=list(class_to_idx.keys())
 print(labels)
@@ -344,6 +334,7 @@ plt.bar(labels, counts_test, 0.5)
 plt.suptitle('Custom Dataset - Testing')
 plt.savefig('../res/test_dts.jpg')
 plt.clf()
+
 IC = type('IdentityClassifier', (), {"predict": lambda i : i, "_estimator_type": "classifier"})
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
@@ -358,6 +349,3 @@ def plt_conf_matrix(y_true,y_pred,labels):
     # plt.show()
 plt_conf_matrix(y_val,y_pred,labels)
 
-# labels_7=[idx_to_class[i] for i in idx_to_class if i!=сontempt_idx]#list(class_to_idx.keys())
-# print(labels_7)
-# plt_conf_matrix(y_val_new, y_pred_filtered[other_indices],labels_7)
