@@ -27,11 +27,11 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../01_Custom_dts/'
+ALL_DATA_DIR = '../01_Emotion/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
-TEST_DIR = ALL_DATA_DIR + 'test'
+TEST_DIR = '../custom_datasets/test' #ALL_DATA_DIR + 'test'
 train_dir,test_dir=TRAIN_DIR,TEST_DIR
-IMG_SIZE = 128 
+IMG_SIZE = 224 
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
