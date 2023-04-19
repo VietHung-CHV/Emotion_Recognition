@@ -26,31 +26,7 @@ ALL_DATA_DIR = '../custom_datasets/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
 TEST_DIR = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
-INPUT_SIZE = (128, 128)
 
-AFFECT_DATA_DIR=ALL_DATA_DIR+'AffectNet/'
-AFFECT_TRAIN_DATA_DIR = AFFECT_DATA_DIR+'full_res/train'
-AFFECT_VAL_DATA_DIR = AFFECT_DATA_DIR+'full_res/val'
-AFFECT_SEVEN_TRAIN_DATA_DIR = AFFECT_DATA_DIR+'full_res/seven_emotions/train'
-AFFECT_SEVEN_VAL_DATA_DIR = AFFECT_DATA_DIR+'full_res/seven_emotions/val'
-
-AFFECT_IMG_TRAIN_DATA_DIR = AFFECT_DATA_DIR+str(INPUT_SIZE[0])+'/train'
-AFFECT_IMG_VAL_DATA_DIR = AFFECT_DATA_DIR+str(INPUT_SIZE[0])+'/val'
-AFFECT_IMG_SEVEN_TRAIN_DATA_DIR = AFFECT_DATA_DIR+str(INPUT_SIZE[0])+'/seven_emotions/train'
-AFFECT_IMG_SEVEN_VAL_DATA_DIR = AFFECT_DATA_DIR+str(INPUT_SIZE[0])+'/seven_emotions/val'
-AFFECT_TRAIN_ORIG_DATA_DIR = AFFECT_DATA_DIR+'orig/train'
-AFFECT_VAL_ORIG_DATA_DIR = AFFECT_DATA_DIR+'orig/val'
-
-IMG_AFFECT_DATA_DIR = AFFECT_DATA_DIR+'Manually_Annotated_Images/'
-AFFECT_TRAIN_FILE=AFFECT_DATA_DIR+'training.csv'
-AFFECT_TRAIN_FILTERED_FILE=AFFECT_DATA_DIR+'training_filtered.csv'
-AFFECT_VAL_FILE=AFFECT_DATA_DIR+'validation.csv'
-AFFECT_VAL_FILTERED_FILE=AFFECT_DATA_DIR+'validation_filtered.csv'
-
-AFFECT_TRAIN_ALIGNED_DATA_DIR = AFFECT_DATA_DIR+'full_res_aligned/train'# 8 emotions
-AFFECT_VAL_ALIGNED_DATA_DIR = AFFECT_DATA_DIR+'full_res_aligned/val'
-AFFECT_TRAIN_SEVEN_ALIGNED_DATA_DIR = AFFECT_DATA_DIR+'full_res_aligned/seven_emotions/train'# 7 emotions
-AFFECT_VAL_SEVEN_ALIGNED_DATA_DIR = AFFECT_DATA_DIR+'full_res_aligned/seven_emotions/val'
 
 # Training settings
 batch_size = 64 #48# 32# 32 #16 #8 #
@@ -252,8 +228,10 @@ model=timm.create_model('tf_efficientnet_b0_ns', pretrained=False)
 model.classifier=torch.nn.Identity()
 if use_cuda==True:
     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
+    # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt'))
 else:
     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt', map_location=torch.device('cpu'))) #_new
+    # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt', map_location=torch.device('cpu'))) #_new
 
 model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes)) #1792 #1280 #1536
 #model.head.fc=nn.Linear(in_features=3072, out_features=num_classes)
@@ -269,10 +247,14 @@ if use_cuda:
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085
 
-set_parameter_requires_grad(model, requires_grad=True)
-train(model,6,1e-4,robust=True)
+# set_parameter_requires_grad(model, requires_grad=True)
+# train(model,6,1e-4,robust=True)
 #Best acc:0.8260869383811951
 #val_loss : 0.0212 - val_acc: 0.8261
+
+set_parameter_requires_grad(model, requires_grad=False)
+set_parameter_requires_grad(model.classifier, requires_grad=True)
+train(model, 6, 0.001,robust=True)
 
 if USE_ENET2:
     if False: # 7 emotions
@@ -280,8 +262,8 @@ if USE_ENET2:
         model_name='enet2_7_pt'
     else:
         #PATH='../models/affectnet_emotions/enet_b2_8.pt'
-        PATH='../models/affectnet_emotions/enet_b2_5_best.pt'
-        model_name='enet2_5_pt'
+        PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
+        model_name='enet0_5_pt'
 else:
     if False: # 7 emotions from AFFECT_IMG_SEVEN_TRAIN_DATA_DIR and AFFECT_IMG_SEVEN_VAL_DATA_DIR
         PATH='../models/affectnet_emotions/enet_b0_7.pt'
