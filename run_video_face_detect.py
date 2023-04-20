@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('--net_type', default="RFB", type=str,
                     help='The network architecture ,optional: RFB (higher precision) or slim (faster)')
-parser.add_argument('--input_size', default=480, type=int,
+parser.add_argument('--input_size', default=160, type=int,
                     help='define network input size,default optional value 128/160/320/480/640/1280')
 parser.add_argument('--threshold', default=0.7, type=float,
                     help='score threshold')
@@ -45,20 +45,20 @@ test_transforms = transforms.Compose(
                                      std=[0.229, 0.224, 0.225])
     ]
 )
-train_transforms = transforms.Compose(
-    [
-        transforms.Resize((IMG_SIZE,IMG_SIZE)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    ]
-)
+# train_transforms = transforms.Compose(
+#     [
+#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
+#         transforms.ToTensor(),
+#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                                      std=[0.229, 0.224, 0.225])
+#     ]
+# )
 
-train_dir = 'custom_datasets/train'
-train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
-# class_to_idx=train_dataset.class_to_idx
+# train_dir = 'datasets/custom_datasets/train'
+# train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
+# # class_to_idx=train_dataset.class_to_idx
 
-idx_to_class={idx:cls for cls,idx in train_dataset.class_to_idx.items()}
+idx_to_class={0: 'angry', 1: 'disgust', 2: 'happy', 3: 'neutral', 4: 'sad'}
 
 
 label_path = "./models/voc-model-labels.txt"
