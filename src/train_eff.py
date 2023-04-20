@@ -211,12 +211,12 @@ model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_clas
 model=model.to(device)
 # print(model)
 
-# set_parameter_requires_grad(model, requires_grad=False)
-# set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,15,0.001,robust=True)
+set_parameter_requires_grad(model, requires_grad=False)
+set_parameter_requires_grad(model.classifier, requires_grad=True)
+train(model,6,0.001,robust=True)
 
-# set_parameter_requires_grad(model, requires_grad=True)
-# train(model,9,1e-4,robust=True)
+set_parameter_requires_grad(model, requires_grad=True)
+train(model,15,1e-4,robust=True)
 
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
