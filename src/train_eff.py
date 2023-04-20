@@ -29,9 +29,9 @@ print(use_cuda)
 
 ALL_DATA_DIR = '../custom_datasets/'
 TRAIN_DIR = ALL_DATA_DIR + 'train'
-TEST_DIR = '../01_Custom_dts/' + 'test'
+TEST_DIR = '../01_Emotion/' + 'test'
 train_dir,test_dir=TRAIN_DIR,TEST_DIR
-IMG_SIZE = 128
+IMG_SIZE = 224
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),

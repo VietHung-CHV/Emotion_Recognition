@@ -35,9 +35,11 @@ from vision.ssd.mb_tiny_fd import create_mb_tiny_fd, create_mb_tiny_fd_predictor
 from vision.ssd.mb_tiny_RFB_fd import create_Mb_Tiny_RFB_fd, create_Mb_Tiny_RFB_fd_predictor
 from vision.utils.misc import Timer
 
+IMG_SIZE =  224 
+
 test_transforms = transforms.Compose(
     [
-        transforms.Resize((260, 260)),
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
@@ -45,7 +47,7 @@ test_transforms = transforms.Compose(
 )
 train_transforms = transforms.Compose(
     [
-        transforms.Resize((260,260)),
+        transforms.Resize((IMG_SIZE,IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
@@ -111,15 +113,16 @@ while True:
         w = int(box[2]) - int(box[0])
         h = int(box[3]) - int(box[1])
         aa = max(w, h)
-        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
+        # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
+        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         # x = int(box[0])
         # y = int(box[1])
         # w = int(box[2]) - int(box[0])
         # h = int(box[3]) - int(box[1])
         # aa = max(w, h)
-        face = orig_image[y:int(box[1])+aa, x:int(box[0])+aa]
+        face = orig_image[y:int(box[3]), x:int(box[2])]
         im = Image.fromarray(np.uint8(face))
-        im = im.resize((128,128))
+        im = im.resize((224,224))
         # face = cv2.resize(face, (48,48)) 
         # face = face/255.0
         # print(im.size)
