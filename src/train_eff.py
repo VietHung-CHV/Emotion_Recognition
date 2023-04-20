@@ -27,9 +27,10 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../datasets/custom_datasets/'
+ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
 train_dir = ALL_DATA_DIR + 'train'
-test_dir = ALL_DATA_DIR + 'test'
+# test_dir = ALL_DATA_DIR + 'test'
+test_dir = '../datasets/01_Emotion/test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
 IMG_SIZE = 224
 train_transforms = transforms.Compose(
@@ -212,7 +213,7 @@ model=model.to(device)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,10,0.001,robust=True)
+train(model,15,0.001,robust=True)
 
 # set_parameter_requires_grad(model, requires_grad=True)
 # train(model,9,1e-4,robust=True)

@@ -58,7 +58,7 @@ test_transforms = transforms.Compose(
 # train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
 # # class_to_idx=train_dataset.class_to_idx
 
-idx_to_class={0: 'angry', 1: 'disgust', 2: 'happy', 3: 'neutral', 4: 'sad'}
+idx_to_class={0: 'angry', 1: 'disgusted', 2: 'happy', 3: 'neutral', 4: 'sad'}
 
 
 label_path = "./models/voc-model-labels.txt"
@@ -123,6 +123,7 @@ while True:
         face = orig_image[y:int(box[3]), x:int(box[2])]
         im = Image.fromarray(np.uint8(face))
         im = im.resize((224,224))
+        im.save('res/face.jpg')
         # face = cv2.resize(face, (48,48)) 
         # face = face/255.0
         # print(im.size)
