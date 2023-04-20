@@ -121,7 +121,7 @@ while True:
         # aa = max(w, h)
         # face = orig_image[y:int(box[3]), x:int(box[2])]
         og_rgb = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
-        face = og_rgb[y-40:y+aa+20, x-30:x-30+aa]
+        face = og_rgb[y-40:y+aa+20, x-40:x-40+aa]
         im = Image.fromarray(np.uint8(face))
         im = im.resize((224,224))
         im.save('res/face.jpg')
