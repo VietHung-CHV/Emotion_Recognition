@@ -108,12 +108,12 @@ from robust_optimization import RobustOptimizer
 import copy
 def train(model,n_epochs=epochs, learningrate=lr, robust=False):
     # optimizer
-    # if robust:
-    #     optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
-    #     #print(optimizer)
-    # else:
-    #     optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
-    optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
+    if robust:
+        optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
+        #print(optimizer)
+    else:
+        optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
+    # optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
     # scheduler
     #scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
     best_acc=0
@@ -129,23 +129,23 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             output = model(data)
             loss = criterion(output, label)
 
-            # if robust:
-            #     #optimizer.zero_grad()
-            #     loss.backward()
-            #     optimizer.first_step(zero_grad=True)
+            if robust:
+                #optimizer.zero_grad()
+                loss.backward()
+                optimizer.first_step(zero_grad=True)
   
-            #     # second forward-backward pass
-            #     output = model(data)
-            #     loss = criterion(output, label)
-            #     loss.backward()
-            #     optimizer.second_step(zero_grad=True)
-            # else:
-            #     optimizer.zero_grad()
-            #     loss.backward()
-            #     optimizer.step()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                # second forward-backward pass
+                output = model(data)
+                loss = criterion(output, label)
+                loss.backward()
+                optimizer.second_step(zero_grad=True)
+            else:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+            # optimizer.zero_grad()
+            # loss.backward()
+            # optimizer.step()
 
             acc = (output.argmax(dim=1) == label).float().sum()
             epoch_accuracy += acc
@@ -211,12 +211,12 @@ model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_clas
 model=model.to(device)
 # print(model)
 
-set_parameter_requires_grad(model, requires_grad=False)
-set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,5,0.001,robust=True)
+# set_parameter_requires_grad(model, requires_grad=False)
+# set_parameter_requires_grad(model.classifier, requires_grad=True)
+train(model,15,0.001,robust=True)
 
-set_parameter_requires_grad(model, requires_grad=True)
-train(model,10,1e-4,robust=True)
+# set_parameter_requires_grad(model, requires_grad=True)
+# train(model,10,1e-4,robust=True)
 
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
