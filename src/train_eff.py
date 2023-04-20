@@ -27,10 +27,10 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
+ALL_DATA_DIR = '../datasets/01_Emotion/'
 train_dir = ALL_DATA_DIR + 'train'
 # test_dir = ALL_DATA_DIR + 'test'
-test_dir = '../datasets/01_FER2013_datasets/test'
+test_dir = '../datasets/01_Emotion/test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
 IMG_SIZE = 224
 train_transforms = transforms.Compose(
