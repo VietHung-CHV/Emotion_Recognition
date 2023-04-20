@@ -27,7 +27,7 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
+ALL_DATA_DIR = '../datasets/01_Emotion/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
@@ -212,14 +212,14 @@ model=model.to(device)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-# train(model,10,0.001,robust=True)
+train(model,10,0.001,robust=True)
 
 # set_parameter_requires_grad(model, requires_grad=True)
 # train(model,9,1e-4,robust=True)
 
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
-# torch.save(model, PATH)
+torch.save(model, PATH)
 
 # Load
 print(PATH)
