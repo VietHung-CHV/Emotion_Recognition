@@ -66,8 +66,8 @@ PATH='models/affectnet_emotions/enet_b0_5_best.pt'
 
 net_type = args.net_type
 
-cap = cv2.VideoCapture(args.video_path)  # capture from video
-# cap = cv2.VideoCapture(cv2.CAP_DSHOW)  # capture from camera
+# cap = cv2.VideoCapture(args.video_path)  # capture from video
+cap = cv2.VideoCapture(cv2.CAP_DSHOW)  # capture from camera
 
 class_names = [name.strip() for name in open(label_path).readlines()]
 num_classes = len(class_names)
@@ -124,7 +124,7 @@ while True:
         face = og_rgb[y-40:y+aa+20, x-40:x-40+aa]
         im = Image.fromarray(np.uint8(face))
         im = im.resize((224,224))
-        im.save('res/face.jpg')
+        # im.save('res/face.jpg')
         # face = cv2.resize(face, (48,48)) 
         # face = face/255.0
         # print(im.size)
