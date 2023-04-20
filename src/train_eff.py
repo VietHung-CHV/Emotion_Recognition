@@ -27,10 +27,10 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../custom_datasets/'
-TRAIN_DIR = ALL_DATA_DIR + 'train'
-TEST_DIR = '../01_Emotion/' + 'test'
-train_dir,test_dir=TRAIN_DIR,TEST_DIR
+ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
+train_dir = ALL_DATA_DIR + 'train'
+test_dir = ALL_DATA_DIR + 'test'
+# train_dir,test_dir=TRAIN_DIR,TEST_DIR
 IMG_SIZE = 224
 train_transforms = transforms.Compose(
     [
@@ -46,6 +46,7 @@ train_transforms = transforms.Compose(
 test_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
+        transforms.Grayscale(3),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
@@ -63,17 +64,17 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
 test_dataset = datasets.ImageFolder(root=test_dir, transform=test_transforms)
 test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, **kwargs) 
 
-print(len(train_dataset), len(test_dataset))
+# print(len(train_dataset), len(test_dataset))
 
 (unique, counts) = np.unique(train_dataset.targets, return_counts=True)
 (_, counts_test) = np.unique(test_dataset.targets, return_counts=True)
 cw=1/counts
 cw/=cw.min()
 class_weights = {i:cwi for i,cwi in zip(unique,cw)}
-print(counts, class_weights.values())
+# print(counts, class_weights.values())
 
 num_classes=len(train_dataset.classes)
-print(num_classes)
+# print(num_classes)
 
 weights = torch.FloatTensor(list(class_weights.values())).cuda()
 # if False:
@@ -211,14 +212,14 @@ model=model.to(device)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,10,0.001,robust=True)
+# train(model,10,0.001,robust=True)
 
 # set_parameter_requires_grad(model, requires_grad=True)
 # train(model,9,1e-4,robust=True)
 
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
-torch.save(model, PATH)
+# torch.save(model, PATH)
 
 # Load
 print(PATH)
