@@ -27,7 +27,7 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../datasets/01_Emotion/'
+ALL_DATA_DIR = '../datasets/custom_datasets/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
