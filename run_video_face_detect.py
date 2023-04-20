@@ -113,14 +113,15 @@ while True:
         w = int(box[2]) - int(box[0])
         h = int(box[3]) - int(box[1])
         aa = max(w, h)
-        # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
-        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+        
         # x = int(box[0])
         # y = int(box[1])
         # w = int(box[2]) - int(box[0])
         # h = int(box[3]) - int(box[1])
         # aa = max(w, h)
-        face = orig_image[y:int(box[3]), x:int(box[2])]
+        # face = orig_image[y:int(box[3]), x:int(box[2])]
+        og_rgb = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
+        face = og_rgb[y-30:y+aa+30, x-50:x-50+aa]
         im = Image.fromarray(np.uint8(face))
         im = im.resize((224,224))
         im.save('res/face.jpg')
@@ -131,6 +132,9 @@ while True:
         scores = model(test_transforms(im).unsqueeze(0))
         scores=scores[0].data.cpu().numpy()
         state = idx_to_class[np.argmax(scores[:5])]
+        
+        # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
+        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(orig_image,state,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
         # cv2.putText(orig_image, label,
