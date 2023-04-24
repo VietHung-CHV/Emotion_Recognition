@@ -9,6 +9,7 @@ import cv2
 
 from vision.ssd.config.fd_config import define_img_size
 
+sys.path.insert(0, 'D:/1Hung/01_DATN/Code/Emotion_Recognition/vision')
 parser = argparse.ArgumentParser(
     description='detect_video')
 
@@ -45,18 +46,6 @@ test_transforms = transforms.Compose(
                                      std=[0.229, 0.224, 0.225])
     ]
 )
-# train_transforms = transforms.Compose(
-#     [
-#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
-#         transforms.ToTensor(),
-#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-#                                      std=[0.229, 0.224, 0.225])
-#     ]
-# )
-
-# train_dir = 'datasets/custom_datasets/train'
-# train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
-# # class_to_idx=train_dataset.class_to_idx
 
 idx_to_class={0: 'angry', 1: 'disgusted', 2: 'happy', 3: 'neutral', 4: 'sad'}
 
@@ -95,6 +84,10 @@ model = torch.load(PATH, map_location=torch.device(test_device))
 
 timer = Timer()
 sum = 0
+frame_count = 0
+dict_emo = {
+    'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0
+}
 while True:
     ret, orig_image = cap.read()
     if orig_image is None:
@@ -104,7 +97,9 @@ while True:
     timer.start()
     boxes, labels, probs = predictor.predict(image, candidate_size / 2, threshold)
     interval = timer.end()
-    print('Time: {:.6f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
+    # print('Time: {:.6f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
+    print(frame_count)
+    
     for i in range(boxes.size(0)):
         box = boxes[i, :]
         label = f" {probs[i]:.2f}"
@@ -114,40 +109,31 @@ while True:
         h = int(box[3]) - int(box[1])
         aa = max(w, h)
         
-        # x = int(box[0])
-        # y = int(box[1])
-        # w = int(box[2]) - int(box[0])
-        # h = int(box[3]) - int(box[1])
-        # aa = max(w, h)
-        # face = orig_image[y:int(box[3]), x:int(box[2])]
         og_rgb = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
         face = og_rgb[y-40:y+aa+20, x-40:x-40+aa]
         im = Image.fromarray(np.uint8(face))
         im = im.resize((224,224))
-        # im.save('res/face.jpg')
-        # face = cv2.resize(face, (48,48)) 
-        # face = face/255.0
-        # print(im.size)
-        # print(test_transforms(im))
+        
         scores = model(test_transforms(im).unsqueeze(0))
         scores=scores[0].data.cpu().numpy()
         state = idx_to_class[np.argmax(scores[:5])]
-        
+        dict_emo[state] += 1
         # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
         cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(orig_image,state,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
-        # cv2.putText(orig_image, label,
-        #             (box[0], box[1] - 10),
-        #             cv2.FONT_HERSHEY_SIMPLEX,
-        #             0.5,  # font scale
-        #             (0, 0, 255),
-        #             2)  # line type
+        
     orig_image = cv2.resize(orig_image, None, None, fx=0.8, fy=0.8)
     sum += boxes.size(0)
-    cv2.imshow('Cam 0', orig_image)
+    # cv2.imshow('Cam 0', orig_image)
+    frame_count += 1
+    if frame_count == 300:
+        max_emo = max(dict_emo, key= lambda x: dict_emo[x])
+        print(f'max_emo: {max_emo}')
+        frame_count = 0
+        dict_emo = {'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0 }
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()
 cv2.destroyAllWindows()
-print("all face num:{}".format(sum))
+# print("all face num:{}".format(sum))
