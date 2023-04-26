@@ -4,6 +4,12 @@
 #numpy==1.17.4
 #imutils==0.5.3
 #scikit_learn==0.22.1
+# ====App's Lib====
+ttkbootstrap==1.10.1
+mutagen==1.46.0
+pygame==2.3.0
+glob2==0.7
+# ====Model's Lib====
 torch==2.0.0
 torchvision==0.15.1
 scikit-image==0.20.0
