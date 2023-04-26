@@ -44,8 +44,8 @@ from vision.ssd.mb_tiny_RFB_fd import create_Mb_Tiny_RFB_fd, create_Mb_Tiny_RFB_
 from vision.utils.misc import Timer
 
 
-global paused
-paused = False
+# global paused
+# paused = False
 
 class MediaPlayer(ttk.Frame):
 
@@ -56,6 +56,7 @@ class MediaPlayer(ttk.Frame):
         self.elapsed_var = ttk.DoubleVar(value=0)
         self.remain_var = ttk.DoubleVar(value=190)
         self.playlist_path = None
+        self.paused = False
         # left panel
         self.left_panel = ttk.Frame(self, padding=(2, 1))
         self.left_panel.pack(side=LEFT, fill=BOTH)
@@ -150,7 +151,7 @@ class MediaPlayer(ttk.Frame):
             master=container,
             text=Emoji.get('double vertical bar'),
             padding=10,
-            command=lambda: self.pause(paused),
+            command=lambda: self.pause(self.paused),
         )
         self.pause_btn.pack(side=LEFT, fill=X, expand=YES)        
 
@@ -186,11 +187,11 @@ class MediaPlayer(ttk.Frame):
          
         return tv
     
-    def add_playlist(self, emotion):
-        if emotion in ['angry', 'disgusted', 'sad']:
-            self.playlist_path = "D:/VScode/linhtinh/playlist/playlist2"
-        else:
-            self.playlist_path = "D:/VScode/linhtinh/playlist/playlist1"
+    def add_playlist(self, playlist_path):
+        # if emotion in ['angry', 'disgusted', 'sad']:
+        #     self.playlist_path = "D:/VScode/linhtinh/playlist/playlist2"
+        # else:
+        self.playlist_path = playlist_path
             
         for ix, song in enumerate(glob.glob(self.playlist_path+"/*")):
             song = song.replace(self.playlist_path, "")
@@ -223,7 +224,14 @@ class MediaPlayer(ttk.Frame):
         song_time_cvt = time.strftime('%M:%S', time.gmtime(song_length))
         
         self.remain.configure(text=f'{song_time_cvt}')
+        return int(song_length)
+    
+    def remove_playlist(self):
+        if len(self.tree.get_children())>0:
+            for x in self.tree.get_chilren():
+                self.tree.delete(x)
         
+    
     def play(self):
         cur_item = self.tree.focus()
         song = self.tree.item(cur_item)
@@ -255,15 +263,15 @@ class MediaPlayer(ttk.Frame):
         self.elapse.configure(text='00:00')
     
     def pause(self, is_paused):
-        global paused
-        paused = is_paused
+        # global paused
+        # paused = is_paused
         
-        if paused:
+        if self.paused:
             pygame.mixer.music.unpause()
-            paused = False
+            self.paused = False
         else:
             pygame.mixer.music.pause()
-            paused = True
+            self.paused = True
         
     def next(self):
         song_id = self.tree.selection()[0]
@@ -324,7 +332,7 @@ class MediaPlayer(ttk.Frame):
         # print(current_time)
         
         # self.elapse.configure(text=f'{current_time_min:02d}:{current_time_sec:02d}')
-        self.scale.config(value=int(current_time))        
+        # self.scale.config(value=int(current_time))        
         self.elapse.after(1000, self.play_time)
         
     
@@ -396,6 +404,7 @@ if __name__ == '__main__':
     
     sum = 0
     frame_count = 0
+    next_frame_check = 150
     # dict_emo = {
     #     'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0
     # }
@@ -406,7 +415,7 @@ if __name__ == '__main__':
     # app.geometry('800x600')
     mp = MediaPlayer(app)
     def show_frame():
-        global dict_emo, sum, frame_count
+        global dict_emo, sum, frame_count, next_frame_check
         ret, orig_image = cap.read()
         # if orig_image is None:
         #     print("end")
@@ -450,22 +459,56 @@ if __name__ == '__main__':
         mp.media.imgtk = imgtk
         mp.media.configure(image=imgtk)
         mp.media.after(10, show_frame)
-        # mp.media = ttk.Label(mp.right_panel, image=imgtk)
-        # mp.media.pack(fill=BOTH, expand=YES)
         
         frame_count += 1
-        if frame_count % 150==0:
+        
+        if next_frame_check == frame_count:
+            positive = ['happy', 'neutral']
+            negative = ['angry', 'disgusted', 'sad']
             max_emo = max(dict_emo, key= lambda x: dict_emo[x])
             print(f'max_emo: {max_emo}')
-            mp.add_playlist(max_emo)
+            
+            if frame_count <= 150:
+                song_length = 0
+                prev_emo = max_emo
+                if max_emo in negative:
+                    playlist_p = "D:/VScode/linhtinh/playlist/playlist2"
+                else:
+                    playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
+                song_length = mp.add_playlist(playlist_p)
+                next_frame_check = frame_count+song_length
+            else:
+                if max_emo != prev_emo:
+                    mp.remove_playlist()
+                    prev_emo = max_emo
+                
+                    if max_emo in negative:
+                        playlist_p = "D:/VScode/linhtinh/playlist/playlist2"
+                    else:
+                        playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
+                    song_length = mp.add_playlist(playlist_p)
+                    next_frame_check = frame_count+song_length
+                else:
+                    song_length = 300 #length next song in playlist
+                    next_frame_check = frame_count+song_length
+                    
+            
+            # if max_emo in negative:
+            #     playlist_p = "D:/VScode/linhtinh/playlist/playlist2"
+            # else:
+            #     playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
+                
+            
+                
+            # if song_length != 0 :
+            #     pass
+            # else: 
+            #     song_length = mp.add_playlist(playlist_p)
+            #     pass
+            
             dict_emo = {'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0 }
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-        # cap.release()
-        # cv2.destroyAllWindows()
+        
     show_frame()
-    
-    
     
     # mp.scale.set(1.35)  # set default
     app.mainloop()
