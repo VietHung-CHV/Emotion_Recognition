@@ -51,6 +51,7 @@ class MediaPlayer(ttk.Frame):
 
     def __init__(self, master):
         super().__init__(master)
+        pygame.mixer.init()
         self.pack(fill=BOTH, expand=YES)
         self.hdr_var = ttk.StringVar()
         self.elapsed_var = ttk.DoubleVar(value=0)
@@ -210,21 +211,22 @@ class MediaPlayer(ttk.Frame):
         # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         song_mut = MP3(song)
-        global song_length
-        song_length = song_mut.info.length
-        pygame.mixer.init()
+        
+        self.song_length = song_mut.info.length
+        
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0)
+        
+        song_time_cvt = time.strftime('%M:%S', time.gmtime(self.song_length))
+        self.remain.configure(text=f'{song_time_cvt}')
         self.play_time()
         
-        slider_position = int(song_length)
+        slider_position = int(self.song_length)
         self.scale.config(to=slider_position, value=0)
         # Get Song Length
         
-        song_time_cvt = time.strftime('%M:%S', time.gmtime(song_length))
         
-        self.remain.configure(text=f'{song_time_cvt}')
-        return int(song_length)
+        return int(self.song_length)
     
     def remove_playlist(self):
         if len(self.tree.get_children())>0:
@@ -243,20 +245,21 @@ class MediaPlayer(ttk.Frame):
         # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         song_mut = MP3(song)
-        global song_length
-        song_length = song_mut.info.length
-        pygame.mixer.init()
+        
+        self.song_length = song_mut.info.length
+        
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0)
+        
+        song_time_cvt = time.strftime('%M:%S', time.gmtime(self.song_length))
+        self.remain.configure(text=f'{song_time_cvt}')
         self.play_time()
         
-        slider_position = int(song_length)
-        self.scale.config(to=slider_position, value=0)
+        # slider_position = int(self.song_length)
+        # self.scale.config(to=slider_position, value=0)
         # Get Song Length
         
-        song_time_cvt = time.strftime('%M:%S', time.gmtime(song_length))
         
-        self.remain.configure(text=f'{song_time_cvt}')
 
     def stop(self):
         pygame.mixer.music.stop()
@@ -282,12 +285,11 @@ class MediaPlayer(ttk.Frame):
         self.tree.selection_set(str(next_song_id))
         # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
-        pygame.mixer.init()
+        self.song_length = MP3(song).info.length
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0)
         
-        song_time_cvt = time.strftime('%M:%S', time.gmtime(song_length))
-        
+        song_time_cvt = time.strftime('%M:%S', time.gmtime(self.song_length))
         self.remain.configure(text=f'{song_time_cvt}')
         
     
@@ -300,12 +302,11 @@ class MediaPlayer(ttk.Frame):
         self.tree.selection_set(str(prev_song_id))
         # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
-        pygame.mixer.init()
+        self.song_length = MP3(song).info.length
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0)
         
-        song_time_cvt = time.strftime('%M:%S', time.gmtime(song_length))
-        
+        song_time_cvt = time.strftime('%M:%S', time.gmtime(self.song_length))
         self.remain.configure(text=f'{song_time_cvt}')
     
     def select_all(self):
@@ -315,24 +316,35 @@ class MediaPlayer(ttk.Frame):
         return 0
     
     def play_time(self):
+        # song_id = self.tree.selection()[0]
+        # song = self.tree.item(str(song_id),"values")[0]
+        # song = f'{self.playlist_path}/{song}.mp3'
+        # self.song_length = MP3(song).info.length
+        
         current_time = pygame.mixer.music.get_pos()/1000
+        
         # Convert time format
         # current_time_min = int(current_time // 60)
         # current_time_sec = int(current_time % 60)
         current_time_cvt = time.strftime('%M:%S', time.gmtime(current_time))
-        current_time+=1
+        # current_time+=1
+        print(int(current_time))
+        print(int(self.scale['value']))
         if int(self.scale.get()) == int(current_time):
-            slider_position = int(song_length)
+            slider_position = int(self.song_length)
             self.scale.config(to=slider_position, value=int(current_time))
         else:
-            slider_position = int(song_length)
+            slider_position = int(self.song_length)
             self.scale.config(to=slider_position, value=int(self.scale.get()))
             current_time_cvt = time.strftime('%M:%S', time.gmtime(int(self.scale.get())))
             self.elapse.configure(text=current_time_cvt)
         # print(current_time)
         
         # self.elapse.configure(text=f'{current_time_min:02d}:{current_time_sec:02d}')
-        # self.scale.config(value=int(current_time))        
+        # update slider position value to current song position
+        # self.scale.config(value=int(current_time))  
+        
+        # update time      
         self.elapse.after(1000, self.play_time)
         
     
@@ -347,7 +359,7 @@ class MediaPlayer(ttk.Frame):
             song = song['values'][0]
         # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
-        pygame.mixer.init()
+        
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0, start=int(self.scale.get()))
 
@@ -404,7 +416,7 @@ if __name__ == '__main__':
     
     sum = 0
     frame_count = 0
-    next_frame_check = 150
+    next_frame_check = 10
     # dict_emo = {
     #     'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0
     # }
@@ -489,6 +501,8 @@ if __name__ == '__main__':
                     song_length = mp.add_playlist(playlist_p)
                     next_frame_check = frame_count+song_length
                 else:
+                    mp.next()
+                    mp.tree.selection
                     song_length = 300 #length next song in playlist
                     next_frame_check = frame_count+song_length
                     
