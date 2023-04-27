@@ -43,7 +43,7 @@ def simple_CNN(input_shape, num_classes):
     model.add(Dense(36))
     model.add(BatchNormalization())
     model.add(Dropout(.5))
-    model.add(Dense(5))
+    model.add(Dense(num_classes))
     
     
 

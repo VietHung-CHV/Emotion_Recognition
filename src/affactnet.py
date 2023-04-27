@@ -18,19 +18,20 @@ from PIL import Image
 
 from torchvision import datasets, transforms
 from tqdm import tqdm
+from model1 import Model1
 
 
 print(f"Torch: {torch.__version__}")
 
-ALL_DATA_DIR = '../custom_datasets/'
-TRAIN_DIR = ALL_DATA_DIR + 'train'
-TEST_DIR = ALL_DATA_DIR + 'test'
+ALL_DATA_DIR = '../datasets/02_Combine_dataset/'
+train_dir = ALL_DATA_DIR + 'train'
+test_dir = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
 
 
 # Training settings
 batch_size = 32 #64 #48# 32# 32 #16 #8 #
-epochs = 15 #40
+epochs = 20 #40
 lr = 3e-5
 gamma = 0.7
 seed = 42
@@ -38,21 +39,13 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 # use_cuda = False
-#net_description='affectnet_'+net_description
-train_dir,test_dir=TRAIN_DIR,TEST_DIR#AFFECT_TRAIN_DATA_DIR,AFFECT_VAL_DATA_DIR
-#train_dir,test_dir=AFFECT_IMG_TRAIN_DATA_DIR,AFFECT_IMG_VAL_DATA_DIR
-#train_dir,test_dir=AFFECT_SEVEN_TRAIN_DATA_DIR,AFFECT_SEVEN_VAL_DATA_DIR
-#train_dir,test_dir=AFFECT_IMG_SEVEN_TRAIN_DATA_DIR,AFFECT_IMG_SEVEN_VAL_DATA_DIR
-#train_dir,test_dir=AFFECT_TRAIN_ORIG_DATA_DIR,AFFECT_VAL_ORIG_DATA_DIR
 
-#train_dir,test_dir=AFFECT_TRAIN_ALIGNED_DATA_DIR,AFFECT_VAL_ALIGNED_DATA_DIR
-#train_dir,test_dir=AFFECT_TRAIN_SEVEN_ALIGNED_DATA_DIR,AFFECT_VAL_SEVEN_ALIGNED_DATA_DIR
 
 print(train_dir,test_dir)
 
 USE_ENET2=True #False #
 
-IMG_SIZE=260 if USE_ENET2 else 224 # 300 # 80 #
+IMG_SIZE= 224 # 300 # 80 #
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
@@ -65,6 +58,7 @@ train_transforms = transforms.Compose(
 test_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),
+        transforms.Grayscale(3),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
@@ -98,41 +92,16 @@ print(num_classes)
 
 # loss function
 weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda==True else torch.FloatTensor(list(class_weights.values()))
-# if False:
+
 criterion = nn.CrossEntropyLoss(weight=weights)
-    #criterion = nn.CrossEntropyLoss()
-# else:
-#     def label_smooth(target, n_classes: int, label_smoothing=0.1):
-#         # convert to one-hot
-#         batch_size = target.size(0)
-#         target = torch.unsqueeze(target, 1)
-#         soft_target = torch.zeros((batch_size, n_classes), device=target.device)
-#         soft_target.scatter_(1, target, 1)
-#         # label smoothing
-#         soft_target = soft_target * (1 - label_smoothing) + label_smoothing / n_classes
-#         return soft_target
 
-#     def cross_entropy_loss_with_soft_target(pred, soft_target):
-#         #logsoftmax = nn.LogSoftmax(dim=-1)
-#         return torch.mean(torch.sum(- weights*soft_target * torch.nn.functional.log_softmax(pred, -1), 1))
 
-#     def cross_entropy_with_label_smoothing(pred, target):
-#         soft_target = label_smooth(target, pred.size(1)) #num_classes) #
-#         return cross_entropy_loss_with_soft_target(pred, soft_target)
-
-#     criterion=cross_entropy_with_label_smoothing
-    
-from robust_optimization import RobustOptimizer
 import copy
 def train(model,n_epochs=epochs, learningrate=lr, robust=False):
-    # optimizer
-    # if robust:
-    #     optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
-    #     #print(optimizer)
-    # else:
+    
     optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
     # scheduler
-    #scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
+    # scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
     best_acc=0
     best_model=None
     for epoch in range(n_epochs):
@@ -147,17 +116,6 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             output = model(data)
             loss = criterion(output, label)
 
-            # if robust:
-            #     #optimizer.zero_grad()
-            #     loss.backward()
-            #     optimizer.first_step(zero_grad=True)
-  
-            #     # second forward-backward pass
-            #     output = model(data)
-            #     loss = criterion(output, label)
-            #     loss.backward()
-            #     optimizer.second_step(zero_grad=True)
-            # else:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -223,8 +181,8 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
 
 import timm
 
-model=timm.create_model('efficientnet_b0', pretrained=False)
-model.classifier=torch.nn.Identity()
+# model=timm.create_model('efficientnet_b0', pretrained=False)
+# model.classifier=torch.nn.Identity()
 # if use_cuda==True:
 #     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt')) #_new
 #     # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt'))
@@ -232,16 +190,20 @@ model.classifier=torch.nn.Identity()
 #     model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet0_new.pt', map_location=torch.device('cpu'))) #_new
     # model.load_state_dict(torch.load('../models/pretrained_faces/state_vggface2_enet2.pt', map_location=torch.device('cpu'))) #_new
 
-model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes)) #1792 #1280 #1536
+# model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes)) #1792 #1280 #1536
 #model.head.fc=nn.Linear(in_features=3072, out_features=num_classes)
 #model.head=nn.Sequential(nn.Linear(in_features=768, out_features=num_classes))
+# model = ResNet50(num_classes=5)
+model = timm.create_model('resnet50',num_classes=5, pretrained=False)
+# model = Model1(num_classes=5)
+
 if use_cuda:
     model=model.to(device)
-print(model)
+# print(model)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,epochs,0.001,robust=True)
+# train(model,epochs,0.001,robust=True)
 #Best acc:0.48875007033348083
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085
@@ -274,7 +236,7 @@ train(model,epochs,0.001,robust=True)
 # print(PATH)
 PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
 # Save
-torch.save(model, PATH)
+# torch.save(model, PATH)
 print(model)
 
 # Load
