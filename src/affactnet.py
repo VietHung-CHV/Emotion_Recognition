@@ -19,11 +19,11 @@ from PIL import Image
 from torchvision import datasets, transforms
 from tqdm import tqdm
 from model1 import Model1
-
+from models.custom_model import resnet50
 
 print(f"Torch: {torch.__version__}")
 
-ALL_DATA_DIR = '../datasets/02_Combine_dataset/'
+ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
@@ -194,8 +194,8 @@ import timm
 #model.head.fc=nn.Linear(in_features=3072, out_features=num_classes)
 #model.head=nn.Sequential(nn.Linear(in_features=768, out_features=num_classes))
 # model = ResNet50(num_classes=5)
-model = timm.create_model('resnet50',num_classes=5, pretrained=False)
-# model = Model1(num_classes=5)
+model = timm.create_model('resnet50',num_classes=5, pretrained=True)
+# model = Model1(num_features=IMG_SIZE, num_classes=5)
 
 if use_cuda:
     model=model.to(device)
@@ -203,7 +203,7 @@ if use_cuda:
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-# train(model,epochs,0.001,robust=True)
+train(model,epochs,0.001,robust=True)
 #Best acc:0.48875007033348083
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085
@@ -234,9 +234,9 @@ if use_cuda:
 #         #PATH='../models/affectnet_emotions/enet_b0_8_best_afew.pt'
 #         model_name='enet0_5_pt'
 # print(PATH)
-PATH='../models/affectnet_emotions/enet_b0_5_best.pt'
+PATH='../models/affectnet_emotions/custom_model.pt'
 # Save
-# torch.save(model, PATH)
+torch.save(model, PATH)
 print(model)
 
 # Load
