@@ -20,6 +20,7 @@ from model import Model
 from utils import *
 from resnet import *
 from loss import ACLoss
+import tqdm
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('--raf_path', type=str, default='../raf-basic', help='raf_dataset_path')
@@ -70,7 +71,32 @@ def train(args, model, train_loader, optimizer, scheduler, device):
         correct_num = torch.eq(predicts, labels).sum()
         correct_sum += correct_num
         running_loss += loss
+    # for data, label in tqdm(train_loader):
+    #     data = data.to(device)
+    #     label = label.to(device)
+        
+    #     criterion = nn.CrossEntropyLoss(reduction='none')
 
+    #     output, hm1 = model(imgs1)
+    #     output_flip, hm2 = model(imgs2)
+        
+    #     grid_l = generate_flip_grid(args.w, args.h, device)
+
+    #     loss1 = nn.CrossEntropyLoss()(output, labels)
+    #     flip_loss_l = ACLoss(hm1, hm2, grid_l, output)
+
+    #     loss = loss1 + args.lam * flip_loss_l
+
+    #     optimizer.zero_grad()
+    #     loss.backward()
+    #     optimizer.step()
+
+    #     iter_cnt += 1
+    #     _, predicts = torch.max(output, 1)
+    #     correct_num = torch.eq(predicts, labels).sum()
+    #     correct_sum += correct_num
+    #     running_loss += loss
+    
     scheduler.step()
     running_loss = running_loss / iter_cnt
     acc = correct_sum.float() / float(train_loader.dataset.__len__())
@@ -94,6 +120,7 @@ def test(model, test_loader, device):
 
 
         for batch_i, (imgs1, labels, indexes, imgs2) in enumerate(test_loader):
+        # for imgs1, labels in tqdm(test_loader):
             imgs1 = imgs1.to(device)
             labels = labels.to(device)
 
@@ -126,7 +153,7 @@ def main():
     batch_size = 32
     
     train_transforms = transforms.Compose([
-        transforms.ToPILImage(),
+        # transforms.ToPILImage(),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -134,16 +161,16 @@ def main():
         transforms.RandomErasing(scale=(0.02, 0.25)) ])
     
     eval_transforms = transforms.Compose([
-        transforms.ToPILImage(),
+        # transforms.ToPILImage(),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])])
     
     train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+    # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
     test_dataset = datasets.ImageFolder(root=test_dir, transform=eval_transforms)
-    test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True) 
+    # test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True) 
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=args.batch_size,
@@ -154,7 +181,11 @@ def main():
                                               shuffle=False,
                                               num_workers=args.workers,
                                               pin_memory=True) 
-    
+    for idx, d in enumerate(train_loader):
+        print(f'idx {idx}')
+        print(f'd: {d}')
+        break
+        
     model = Model(args)
     
     device = torch.device('cuda:{}'.format(args.gpu))

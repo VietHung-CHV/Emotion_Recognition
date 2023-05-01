@@ -19,11 +19,14 @@ from PIL import Image
 from torchvision import datasets, transforms
 from tqdm import tqdm
 from model1 import Model1
-from models.custom_model import resnet50
+# from models.custom_model import resnet50
+from c_model_1 import EModel
+from resnet_ver2 import *
+from custom_model import Face_Emotion_CNN
 
 print(f"Torch: {torch.__version__}")
 
-ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
+ALL_DATA_DIR = '../datasets/01_Emotion_gc1/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
@@ -31,40 +34,55 @@ test_dir = ALL_DATA_DIR + 'test'
 
 # Training settings
 batch_size = 32 #64 #48# 32# 32 #16 #8 #
-epochs = 20 #40
-lr = 3e-5
+epochs = 60 #40
+lr = 1e-5
 gamma = 0.7
 seed = 42
 device = 'cuda'
 use_cuda = torch.cuda.is_available()
-print(use_cuda)
+# print(use_cuda)
 # use_cuda = False
 
 
-print(train_dir,test_dir)
+# print(train_dir,test_dir)
 
 USE_ENET2=True #False #
 
-IMG_SIZE= 224 # 300 # 80 #
-train_transforms = transforms.Compose(
-    [
-        transforms.Resize((IMG_SIZE,IMG_SIZE)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    ]
-)
+IMG_SIZE= 224# 300 # 80 #
+# train_transforms = transforms.Compose(
+#     [
+#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
+#         transforms.ToTensor(),
+#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                                      std=[0.229, 0.224, 0.225])
+#     ]
+# )
 
-test_transforms = transforms.Compose(
-    [
-        transforms.Resize((IMG_SIZE,IMG_SIZE)),
-        transforms.Grayscale(3),
+# test_transforms = transforms.Compose(
+#     [
+#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
+#         transforms.Grayscale(3),
+#         transforms.ToTensor(),
+#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                                      std=[0.229, 0.224, 0.225])
+#     ]
+# )
+
+
+train_transforms = transforms.Compose([
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    ]
-)
-print(test_transforms)
+                             std=[0.229, 0.224, 0.225]),
+        transforms.RandomErasing(scale=(0.02, 0.25)) ])
+    
+test_transforms = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.Grayscale(3),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])])
+# print(test_transforms)
 
 #adapted from https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
 def set_parameter_requires_grad(model, requires_grad):
@@ -78,17 +96,17 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
 test_dataset = datasets.ImageFolder(root=test_dir, transform=test_transforms)
 test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, **kwargs) 
 
-print(len(train_dataset), len(test_dataset))
+# print(len(train_dataset), len(test_dataset))
 
 (unique, counts) = np.unique(train_dataset.targets, return_counts=True)
 (_, counts_test) = np.unique(test_dataset.targets, return_counts=True)
 cw=1/counts
 cw/=cw.min()
 class_weights = {i:cwi for i,cwi in zip(unique,cw)}
-print(counts, class_weights.values())
+# print(counts, class_weights.values())
 
 num_classes=len(train_dataset.classes)
-print(num_classes)
+# print(num_classes)
 
 # loss function
 weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda==True else torch.FloatTensor(list(class_weights.values()))
@@ -196,14 +214,22 @@ import timm
 # model = ResNet50(num_classes=5)
 model = timm.create_model('resnet50',num_classes=5, pretrained=True)
 # model = Model1(num_features=IMG_SIZE, num_classes=5)
+# model = EModel()
+
+# res50 = ResNet(block=BasicBlock, layers=[3, 4, 6, 3], num_classes=5)
+# model = res50
+
+# model = Face_Emotion_CNN()
+
+# model = EModel2()
 
 if use_cuda:
     model=model.to(device)
-# print(model)
-
+print(model)
+model.eval()
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
-train(model,epochs,0.001,robust=True)
+train(model,epochs,lr,robust=True)
 #Best acc:0.48875007033348083
 #7: Best acc:0.558712363243103
 #5: Best acc:0.6665414571762085

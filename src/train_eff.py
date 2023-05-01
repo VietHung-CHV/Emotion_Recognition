@@ -32,7 +32,7 @@ train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # test_dir = '../datasets/01_Emotion_gc1/test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
-IMG_SIZE = 224
+IMG_SIZE = 48
 train_transforms = transforms.Compose(
     [
         transforms.Resize((IMG_SIZE,IMG_SIZE)),

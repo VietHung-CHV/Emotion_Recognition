@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 import math
+import timm
+
+base_model = timm.create_model('resnet50', pretrained=False)
+
 
 class Flatten(nn.Module):
     def forward(self, input):
@@ -147,6 +151,33 @@ class ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
+    
+class EModel2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = nn.Sequential(
+            base_model,
+            nn.Dropout(0.5),
+            nn.Flatten(),
+            nn.BatchNorm2d(256),
+            nn.Linear(256,128),
+            nn.BatchNorm1d(128),
+            
+            nn.ReLU(),
+            nn.Dropout(.5),
+            nn.Linear(128,64),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            nn.Dropout(.5),
+            nn.Linear(64,32),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Linear(32,5)
+        )
+    def forward(self, x):
+        return self.model(x)
+        
 
 if __name__ == '__main__':
     # res18 = ResNet(block=BasicBlock, n_blocks=[2, 2, 2, 2], channels=[64, 128, 256, 512], output_dim=1000)
