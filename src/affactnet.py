@@ -26,7 +26,7 @@ from custom_model import Face_Emotion_CNN
 
 print(f"Torch: {torch.__version__}")
 
-ALL_DATA_DIR = '../datasets/01_Emotion_gc1/'
+ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
 # INPUT_SIZE = (224, 224)
@@ -49,39 +49,39 @@ use_cuda = torch.cuda.is_available()
 USE_ENET2=True #False #
 
 IMG_SIZE= 224# 300 # 80 #
-# train_transforms = transforms.Compose(
-#     [
-#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
-#         transforms.ToTensor(),
-#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-#                                      std=[0.229, 0.224, 0.225])
-#     ]
-# )
-
-# test_transforms = transforms.Compose(
-#     [
-#         transforms.Resize((IMG_SIZE,IMG_SIZE)),
-#         transforms.Grayscale(3),
-#         transforms.ToTensor(),
-#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-#                                      std=[0.229, 0.224, 0.225])
-#     ]
-# )
-
-
-train_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),
+train_transforms = transforms.Compose(
+    [
+        transforms.Resize((IMG_SIZE,IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
-        transforms.RandomErasing(scale=(0.02, 0.25)) ])
+                                     std=[0.229, 0.224, 0.225])
+    ]
+)
+
+test_transforms = transforms.Compose(
+    [
+        transforms.Resize((IMG_SIZE,IMG_SIZE)),
+        transforms.Grayscale(3),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    ]
+)
+
+
+# train_transforms = transforms.Compose([
+#         transforms.Resize((224, 224)),
+#         transforms.ToTensor(),
+#         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                              std=[0.229, 0.224, 0.225]),
+#         transforms.RandomErasing(scale=(0.02, 0.25)) ])
     
-test_transforms = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.Grayscale(3),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225])])
+# test_transforms = transforms.Compose([
+#     transforms.Resize((224, 224)),
+#     transforms.Grayscale(3),
+#     transforms.ToTensor(),
+#     transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                             std=[0.229, 0.224, 0.225])])
 # print(test_transforms)
 
 #adapted from https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
@@ -112,7 +112,7 @@ num_classes=len(train_dataset.classes)
 weights = torch.FloatTensor(list(class_weights.values())).cuda() if use_cuda==True else torch.FloatTensor(list(class_weights.values()))
 
 criterion = nn.CrossEntropyLoss(weight=weights)
-
+# criterion = nn.NLLLoss()
 
 import copy
 def train(model,n_epochs=epochs, learningrate=lr, robust=False):

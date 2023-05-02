@@ -130,9 +130,10 @@ while True:
         # print(im.size)
         # print(test_transforms(im))
         scores = model(test_transforms(im).unsqueeze(0))
+        # proba = torch.softmax(scores, 0)
         scores=scores[0].data.cpu().numpy()
         state = idx_to_class[np.argmax(scores[:5])]
-        
+        state = state + " - " + str(scores)
         # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
         cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         font = cv2.FONT_HERSHEY_SIMPLEX
