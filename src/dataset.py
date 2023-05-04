@@ -6,7 +6,7 @@ def get_dataloaders():
     ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
     train_dir = ALL_DATA_DIR + 'train'
     test_dir = ALL_DATA_DIR + 'test'
-    batch_size = 32
+    batch_size = 128
     IMG_SIZE= 48# 300 # 80 #
     train_transforms = transforms.Compose(
         [

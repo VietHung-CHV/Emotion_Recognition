@@ -17,7 +17,7 @@ from utils import (Logger, get_model, mixup_criterion, mixup_data, random_seed, 
 warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='USTC Computer Vision Final Project')
-parser.add_argument('--arch', default="ResNet50", type=str)
+parser.add_argument('--arch', default="ResNet18", type=str)
 parser.add_argument('--epochs', default=300, type=int) #default=300
 parser.add_argument('--batch_size', default=32, type=int) #default=128
 parser.add_argument('--scheduler', default="reduce", type=str, help='[reduce, cos]')
@@ -134,8 +134,8 @@ def main():
         is_best = val_acc > best_acc
         best_acc = max(val_acc, best_acc)
         writer.add_scalar("Valid/Best Accuracy", best_acc, epoch)
-        if val_loss<0.015:
-            break
+        # if val_loss<0.015:
+        #     break
         # save_checkpoint({
         #     'epoch': epoch,
         #     'model_state_dict': model.state_dict(),
@@ -146,7 +146,7 @@ def main():
     PATH='../models/affectnet_emotions/best_custom_model.pt'
     # Save
     torch.save(model, PATH)
-    print(model)
+    # print(model)
     logger.info("Best val ACC %.4f", best_acc)
     writer.close()
 

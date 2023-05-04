@@ -133,6 +133,18 @@ while True:
         # proba = torch.softmax(scores, 0)
         scores=scores[0].data.cpu().numpy()
         state = idx_to_class[np.argmax(scores[:5])]
+        
+        if state == "angry":
+            state = "tuc gian"
+        elif state =="disgusted":
+            state = "kho chiu"
+        elif state == "happy":
+            state = "vui ve"
+        elif state == "neutral":
+            state = "binh thuong"
+        else:
+            state = "buon"
+        
         state = state + " - " + str(scores)
         # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
         cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
