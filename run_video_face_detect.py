@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import sys
 import cv2
+import time
 
 from vision.ssd.config.fd_config import define_img_size
 
@@ -14,7 +15,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('--net_type', default="RFB", type=str,
                     help='The network architecture ,optional: RFB (higher precision) or slim (faster)')
-parser.add_argument('--input_size', default=160, type=int,
+parser.add_argument('--input_size', default=320, type=int,
                     help='define network input size,default optional value 128/160/320/480/640/1280')
 parser.add_argument('--threshold', default=0.7, type=float,
                     help='score threshold')
@@ -94,9 +95,15 @@ net.load(model_path)
 model = torch.load(PATH, map_location=torch.device(test_device))
 
 timer = Timer()
+prev_frame_time = 0
+
+new_frame_time = 0
+frame_t=0
+list_emo = []
 sum = 0
 while True:
     ret, orig_image = cap.read()
+    frame_t+=1
     if orig_image is None:
         print("end")
         break
@@ -105,6 +112,7 @@ while True:
     boxes, labels, probs = predictor.predict(image, candidate_size / 2, threshold)
     interval = timer.end()
     print('Time: {:.6f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
+    
     for i in range(boxes.size(0)):
         box = boxes[i, :]
         label = f" {probs[i]:.2f}"
@@ -129,27 +137,63 @@ while True:
         # face = face/255.0
         # print(im.size)
         # print(test_transforms(im))
-        scores = model(test_transforms(im).unsqueeze(0))
+        
+        scores = model(test_transforms(im).unsqueeze(0)) #run_time=0.25s
+        
+        
+        class_prob = torch.softmax(scores, dim=1)
+        # print(class_prob)
+        # get most probable class and its probability:
+        class_prob, topclass = torch.max(class_prob, dim=1)
+        sco = class_prob.tolist()[0]
+        # print(f'topclass: {topclass.numpy()[0]}')
+        # get class names
+        state = idx_to_class[topclass.numpy()[0]]
+        list_emo.append(state)
+        if len(list_emo)>10:
+            list_emo.pop(0)
+        set_list_emo = set(list_emo)
+        cnts = 0
+        for i in set_list_emo:
+            if list_emo.count(i)>cnts:
+                cnts = list_emo.count(i)
+                best_emo = i
+        
+        new_frame_time = time.time()
+        fps = 1/(new_frame_time-prev_frame_time)
+        prev_frame_time = new_frame_time
+        fps = int(fps)
+        fps = "FPS: "+str(fps)
+        
         # proba = torch.softmax(scores, 0)
-        scores=scores[0].data.cpu().numpy()
-        state = idx_to_class[np.argmax(scores[:5])]
+        # scores=scores[0].data.cpu().numpy()
+        # print(scores)
+        # state = idx_to_class[np.argmax(scores[:5])]
         
-        if state == "angry":
-            state = "tuc gian"
-        elif state =="disgusted":
-            state = "kho chiu"
-        elif state == "happy":
-            state = "vui ve"
-        elif state == "neutral":
-            state = "binh thuong"
+        if best_emo == "angry":
+            best_emo = "tuc gian"
+        elif best_emo =="disgusted":
+            best_emo = "kho chiu"
+        elif best_emo == "happy":
+            best_emo = "vui ve"
+        elif best_emo == "neutral":
+            best_emo = "binh thuong"
         else:
-            state = "buon"
+            best_emo = "buon"
         
-        state = state + " - " + str(scores)
+        best_emo = best_emo #+ " - " + "{:.3f}".format(sco)
         # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
-        cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+        # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(orig_image,state,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+        if frame_t %10==0 and frame_t >=10:
+            cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+            cv2.putText(orig_image,best_emo,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+            cur_emo = best_emo 
+        elif frame_t %10!=0 and frame_t >10:
+            cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+            cv2.putText(orig_image,cur_emo,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+        
+        cv2.putText(orig_image, fps, (7, 70), font, 1, (100, 255, 0), 1, cv2.LINE_AA)
         # cv2.putText(orig_image, label,
         #             (box[0], box[1] - 10),
         #             cv2.FONT_HERSHEY_SIMPLEX,

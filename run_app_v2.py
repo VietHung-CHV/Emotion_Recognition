@@ -60,10 +60,12 @@ class MediaPlayer(ttk.Frame):
         self.paused = False
         # left panel
         self.left_panel = ttk.Frame(self, padding=(2, 1))
+        # self.left_panel.grid_propagate(0)
         self.left_panel.pack(side=LEFT, fill=BOTH)
         
         # right panel
-        self.right_panel = ttk.Frame(self, style='bg.TFrame')
+        self.right_panel = ttk.Frame(self, style='bg.TFrame', width="7i")
+        self.right_panel.grid_propagate(True)
         self.right_panel.pack(side=RIGHT, fill=Y)
         
         self.media = ttk.Label(self.right_panel)
@@ -93,6 +95,7 @@ class MediaPlayer(ttk.Frame):
         # img = img.resize((600,400), Image.ANTIALIAS)
         # self.demo_media = ImageTk.PhotoImage(image=img, height=400, width=600)
         self.media = ttk.Label(self.right_panel)
+        self.media.grid_propagate(0)
         self.media.pack(fill=BOTH, expand=YES)
 
     def create_progress_meter(self):
@@ -178,7 +181,7 @@ class MediaPlayer(ttk.Frame):
         tv.configure(columns=(
             'name'
         ))
-        tv.column('name', width=450, stretch=True)
+        tv.column('name', width=750, stretch=True)
 
         for col in tv['columns']:
             tv.heading(col, text=col.title(), anchor=W)
@@ -416,19 +419,23 @@ if __name__ == '__main__':
     
     sum = 0
     frame_count = 0
+    new_frame_time = 0
+    prev_frame_time = 0
     next_frame_check = 10
+    list_emo = []
     # dict_emo = {
     #     'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0
     # }
     dict_emo = dict({'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0})
     cap = cv2.VideoCapture(cv2.CAP_DSHOW)  # capture from camera
     
-    app = ttk.Window("Media Player", "yeti", resizable=(True,True))
-    # app.geometry('800x600')
+    app = ttk.Window("Media Player", "yeti", resizable=(True,True), scaling=2)
+    app.geometry('1500x800')
     mp = MediaPlayer(app)
     def show_frame():
-        global dict_emo, sum, frame_count, next_frame_check
+        global dict_emo, sum, frame_count, next_frame_check, list_emo, prev_frame_time, next_frame_check
         ret, orig_image = cap.read()
+        frame_count += 1
         # if orig_image is None:
         #     print("end")
         #     break
@@ -454,25 +461,74 @@ if __name__ == '__main__':
             im = im.resize((224,224))
             
             scores = model(test_transforms(im).unsqueeze_(0))
-            scores=scores[0].data.cpu().numpy()
-            state = idx_to_class[np.argmax(scores[:5])]
+            
+            class_prob = torch.softmax(scores, dim=1)
+            # print(class_prob)
+            # get most probable class and its probability:
+            class_prob, topclass = torch.max(class_prob, dim=1)
+            sco = class_prob.tolist()[0]
+            # print(f'topclass: {topclass.numpy()[0]}')
+            # get class names
+            state = idx_to_class[topclass.numpy()[0]]
+            
+            list_emo.append(state)
+            if len(list_emo)>10:
+                list_emo.pop(0)
+            set_list_emo = set(list_emo)
+            cnts = 0
+            for i in set_list_emo:
+                if list_emo.count(i)>cnts:
+                    cnts = list_emo.count(i)
+                    best_emo = i
+            
+            
+            new_frame_time = time.time()
+            fps = 1/(new_frame_time-prev_frame_time)
+            prev_frame_time = new_frame_time
+            fps = int(fps)
+            fps = "FPS: "+str(fps)
+            
+            # scores=scores[0].data.cpu().numpy()
+            # state = idx_to_class[np.argmax(scores[:5])]
             dict_emo[state] += 1
+            
+            if best_emo == "angry":
+                best_emo = "tuc gian"
+            elif best_emo =="disgusted":
+                best_emo = "kho chiu"
+            elif best_emo == "happy":
+                best_emo = "vui ve"
+            elif best_emo == "neutral":
+                best_emo = "binh thuong"
+            else:
+                best_emo = "buon"
+            cur_emo = best_emo 
+            # best_emo = best_emo + " - " + "{:.3f}".format(sco)
+            
             # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[0])+aa, int(box[1])+aa), (0, 255, 0), 4)
-            cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+            # cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(orig_image,state,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+            if frame_count %10==0 and frame_count >=10:
+                cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+                cv2.putText(orig_image,best_emo,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+                # cur_emo = best_emo 
+            elif frame_count %10!=0 and frame_count >10:
+                cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
+                cv2.putText(orig_image,cur_emo,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+            
+            cv2.putText(orig_image, fps, (7, 70), font, 1, (100, 255, 0), 1, cv2.LINE_AA)
             
         orig_image = cv2.resize(orig_image, None, None, fx=0.8, fy=0.8)
         sum += boxes.size(0)
         # cv2.imshow('Cam 0', orig_image)
         show_og_img = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
         show_og_img = Image.fromarray(show_og_img)
-        imgtk = ImageTk.PhotoImage(image=show_og_img)
+        imgtk = ImageTk.PhotoImage(image=show_og_img, width=725)
         mp.media.imgtk = imgtk
         mp.media.configure(image=imgtk)
         mp.media.after(10, show_frame)
         
-        frame_count += 1
+        
         
         if next_frame_check == frame_count:
             positive = ['happy', 'neutral']
