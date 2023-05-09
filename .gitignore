@@ -6,3 +6,5 @@
 02_Combine_dataset
 custom_model.pt
 results
+datasets
+checkpoints

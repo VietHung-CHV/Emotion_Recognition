@@ -516,7 +516,7 @@ if __name__ == '__main__':
                 cv2.rectangle(orig_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 4)
                 cv2.putText(orig_image,cur_emo,(x+10,y+15), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
             
-            cv2.putText(orig_image, fps, (7, 70), font, 1, (100, 255, 0), 1, cv2.LINE_AA)
+            # cv2.putText(orig_image, fps, (7, 70), font, 1, (100, 255, 0), 1, cv2.LINE_AA)
             
         orig_image = cv2.resize(orig_image, None, None, fx=0.8, fy=0.8)
         sum += boxes.size(0)
