@@ -27,10 +27,11 @@ device = 'cuda'
 use_cuda = torch.cuda.is_available()
 print(use_cuda)
 
-ALL_DATA_DIR = '../datasets/02_Combine_dataset/'
+ALL_DATA_DIR = '../datasets/01_FER2013_datasets/'
 train_dir = ALL_DATA_DIR + 'train'
 test_dir = ALL_DATA_DIR + 'test'
-# test_dir = '../datasets/01_Emotion_gc1/test'
+val_dir = '../datasets/custom_datasets/test'
+# test_dir = '../datasets/01_Custom_dts/test'
 # train_dir,test_dir=TRAIN_DIR,TEST_DIR
 IMG_SIZE = 48
 train_transforms = transforms.Compose(
@@ -64,7 +65,8 @@ train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transforms)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
 test_dataset = datasets.ImageFolder(root=test_dir, transform=test_transforms)
 test_loader  = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, **kwargs) 
-
+val_dataset = datasets.ImageFolder(root=val_dir, transform=test_transforms)
+val_loader  = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, **kwargs) 
 # print(len(train_dataset), len(test_dataset))
 
 (unique, counts) = np.unique(train_dataset.targets, return_counts=True)
@@ -104,15 +106,20 @@ weights = torch.FloatTensor(list(class_weights.values())).cuda()
 criterion = nn.CrossEntropyLoss(weight=weights)
 
 """Train""" 
-from robust_optimization import RobustOptimizer
+
 import copy
 def train(model,n_epochs=epochs, learningrate=lr, robust=False):
     # optimizer
-    if robust:
-        optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
-        #print(optimizer)
-    else:
-        optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
+    # if robust:
+    #     optimizer = RobustOptimizer(filter(lambda p: p.requires_grad, model.parameters()), optim.Adam, lr=learningrate)
+    #     #print(optimizer)
+    # else:
+    # optimizer = torch.optim.Adadelta(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate, weight_decay=0.0001)
+    # optimizer = torch.optim.Adagrad(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate, weight_decay=0.0001)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate, weight_decay=0.0001, amsgrad=True)
+    # optimizer = torch.optim.ASGD(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate, weight_decay=0.0001)
+    # optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate, momentum=0.9, nesterov=True, weight_decay=0.0001)
+    # optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
     # optimizer=optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learningrate)
     # scheduler
     #scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
@@ -129,20 +136,20 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
             output = model(data)
             loss = criterion(output, label)
 
-            if robust:
-                #optimizer.zero_grad()
-                loss.backward()
-                optimizer.first_step(zero_grad=True)
+            # if robust:
+            #     #optimizer.zero_grad()
+            #     loss.backward()
+            #     optimizer.first_step(zero_grad=True)
   
-                # second forward-backward pass
-                output = model(data)
-                loss = criterion(output, label)
-                loss.backward()
-                optimizer.second_step(zero_grad=True)
-            else:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            #     # second forward-backward pass
+            #     output = model(data)
+            #     loss = criterion(output, label)
+            #     loss.backward()
+            #     optimizer.second_step(zero_grad=True)
+            # else:
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
             # optimizer.zero_grad()
             # loss.backward()
             # optimizer.step()
@@ -204,12 +211,13 @@ def train(model,n_epochs=epochs, learningrate=lr, robust=False):
         
 """"FINETUNE CNN"""
 import timm
-model=timm.create_model('efficientnet_b0', pretrained=False)
-model.classifier=torch.nn.Identity()
+model=timm.create_model('resnet50' , pretrained=True, num_classes=5)
+# model=timm.create_model('efficientnet_b0' , pretrained=False, num_classes=5)
+# model.classifier=torch.nn.Identity()
 
-model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes))
+# model.classifier=nn.Sequential(nn.Linear(in_features=1280, out_features=num_classes))
 model=model.to(device)
-# print(model)
+print(model)
 
 # set_parameter_requires_grad(model, requires_grad=False)
 # set_parameter_requires_grad(model.classifier, requires_grad=True)
@@ -232,12 +240,12 @@ print(class_to_idx)
 idx_to_class={idx:cls for cls,idx in class_to_idx.items()}
 print(idx_to_class)
 
-print(test_dir)
+print(val_dir)
 y_val,y_scores_val=[],[]
 model.eval()
-for class_name in tqdm(os.listdir(test_dir)):
+for class_name in tqdm(os.listdir(val_dir)):
     if class_name in class_to_idx:
-        class_dir=os.path.join(test_dir,class_name)
+        class_dir=os.path.join(val_dir,class_name)
         y=class_to_idx[class_name]
         for img_name in os.listdir(class_dir):
             filepath=os.path.join(class_dir,img_name)
