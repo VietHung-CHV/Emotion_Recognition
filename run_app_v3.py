@@ -86,13 +86,6 @@ class MediaPlayer(ttk.Frame):
 
     def create_media_window(self):
         """Create frame to contain media"""
-        # img_path = Path(__file__).parent / 'assets/mp_background.png'
-        # img = Image.open(img_path)
-        # img = img.resize((800,600), Image.ANTIALIAS)
-        # self.demo_media = ttk.PhotoImage(file=img_path)
-        # self.demo_media = ImageTk.PhotoImage(image=img)
-        # self.media = ttk.Label(self, image=self.demo_media)
-        # self.media.pack(fill=BOTH, expand=YES)
         self.media = ttk.Label(self)
         self.media.grid_propagate(0)
         self.media.pack(fill=BOTH, expand=YES)
@@ -164,15 +157,7 @@ class MediaPlayer(ttk.Frame):
             padding=10,
             command=self.stop,
         )
-        stop_btn.pack(side=LEFT, fill=X, expand=YES)          
-
-        # stop_btn = ttk.Button(
-        #     master=container,
-        #     text=Emoji.get('open file folder'),
-        #     bootstyle=SECONDARY,
-        #     padding=10
-        # )
-        # stop_btn.pack(side=LEFT, fill=X, expand=YES)             
+        stop_btn.pack(side=LEFT, fill=X, expand=YES)                      
 
 
     def on_progress(self, val: float):
@@ -248,7 +233,6 @@ class MediaPlayer(ttk.Frame):
             song = self.tree.item(song_id,"values")[0]
         else:
             song = song['values'][0]
-        # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         song_mut = MP3(song)
         
@@ -286,7 +270,6 @@ class MediaPlayer(ttk.Frame):
             next_song_id = 0
         song = self.tree.item(str(next_song_id),"values")[0]
         self.tree.selection_set(str(next_song_id))
-        # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         self.song_length = MP3(song).info.length
         pygame.mixer.music.load(song)
@@ -304,7 +287,6 @@ class MediaPlayer(ttk.Frame):
             prev_song_id = len(self.tree.get_children())-1
         song = self.tree.item(str(prev_song_id),"values")[0]
         self.tree.selection_set(str(prev_song_id))
-        # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         self.song_length = MP3(song).info.length
         pygame.mixer.music.load(song)
@@ -320,7 +302,6 @@ class MediaPlayer(ttk.Frame):
     def slide(self, val: float):
         song_id = self.tree.selection()[0]
         song = self.tree.item(str(song_id),"values")[0]
-        # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         
         pygame.mixer.music.load(song)
@@ -332,7 +313,6 @@ class MediaPlayer(ttk.Frame):
         
         song_id = self.tree.selection()[0]
         song = self.tree.item(str(song_id),"values")[0]
-        # song = f'D:/VScode/linhtinh/playlist/{song}.mp3'
         song = f'{self.playlist_path}/{song}.mp3'
         song_mut = MP3(song)
         self.song_length = song_mut.info.length
@@ -366,10 +346,6 @@ class MediaPlayer(ttk.Frame):
         self.elapse.after(1000, self.play_time)
 
 if __name__ == '__main__':
-    # width, height = 800, 600
-    # cap = cv2.VideoCapture(cv2.CAP_DSHOW)
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     
     IMG_SIZE =  224 
 
@@ -430,14 +406,10 @@ if __name__ == '__main__':
     dict_emo = dict({'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0})
     cap = cv2.VideoCapture(cv2.CAP_DSHOW)  # capture from camera
     
-    app = ttk.Window("Media Player", "yeti", resizable=(True,True), scaling=2)
-    app.wm_maxsize(width=1200,height=900)
-    app.wm_minsize(width=1100,height=600)
+    app = ttk.Window("Media Player", "yeti")
     
-    # app.eval('tk::PlaceWindow . center')
-    # app.geometry('1500x800')
     mp = MediaPlayer(app)
-    # mp.scale.set(0.35)
+    
     def show_frame():
         global dict_emo, sum, frame_count, new_frame_time, list_emo, prev_frame_time, frame_checked, prev_emo
         ret, orig_image = cap.read()
@@ -471,12 +443,10 @@ if __name__ == '__main__':
             scores = model(test_transforms(im).unsqueeze_(0))
             
             class_prob = torch.softmax(scores, dim=1)
-            # print(class_prob)
-            # get most probable class and its probability:
+            
             class_prob, topclass = torch.max(class_prob, dim=1)
             sco = class_prob.tolist()[0]
-            # print(f'topclass: {topclass.numpy()[0]}')
-            # get class names
+            
             state = idx_to_class[topclass.numpy()[0]]
             
             list_emo.append(state)
@@ -531,6 +501,7 @@ if __name__ == '__main__':
         # cv2.imshow('Cam 0', orig_image)
         show_og_img = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
         show_og_img = Image.fromarray(show_og_img)
+        show_og_img = show_og_img.resize((800,600), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(image=show_og_img, width=725)
         mp.media.imgtk = imgtk
         mp.media.configure(image=imgtk)
@@ -541,20 +512,10 @@ if __name__ == '__main__':
         if frame_count>=15:
             max_emo = best_emo
         if frame_checked == frame_count:
-            # positive = ['happy', 'neutral']
-            # negative = ['angry', 'disgusted', 'sad']
-            # set_list_emo = set(list_emo)
-            # cnts = 0
-            # for i in set_list_emo:
-            #     if list_emo.count(i)>cnts:
-            #         cnts = list_emo.count(i)
-            #         max_emo = i
-            # max_emo = max(dict_emo, key= lambda x: dict_emo[x])
+            
             
             print(f'max_emo: {max_emo}')
             
-            # if frame_count <= 15:
-            # song_length = 0
             prev_emo = max_emo
             print(f'prev emo: {prev_emo}')
             if max_emo in negative:
@@ -562,9 +523,7 @@ if __name__ == '__main__':
             else:
                 playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
             song_length = mp.add_playlist(playlist_p)
-            # frame_checked = frame_count+song_length
-        if frame_checked < frame_count:
-            print(f'prev emo: {prev_emo}')
+            
         if frame_checked < frame_count:
             if int(mp.scale.get()) == int(mp.song_length):
                 if max_emo != prev_emo:
@@ -576,31 +535,13 @@ if __name__ == '__main__':
                     else:
                         playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
                     song_length = mp.add_playlist(playlist_p)
-                    # frame_checked = frame_count+song_length
+                    
                 else:
                     mp.next()
-                # mp.tree.selection
-                # song_length = int(mp.song_length)+1 #length next song in playlist
-                # frame_checked = frame_count+song_length
-            # else:        
-            
-            # if max_emo in negative:
-            #     playlist_p = "D:/VScode/linhtinh/playlist/playlist2"
-            # else:
-            #     playlist_p = "D:/VScode/linhtinh/playlist/playlist1"
                 
-            
-                
-            # if song_length != 0 :
-            #     pass
-            # else: 
-            #     song_length = mp.add_playlist(playlist_p)
-            #     pass
-            
-            # dict_emo = {'angry': 0, 'disgusted': 0, 'happy': 0, 'neutral': 0, 'sad': 0 }
             
         mp.media.after(15, show_frame)
     show_frame()
     
-    # mp.scale.set(1.35)  # set default
+    mp.scale.set(3.35)  # set default
     app.mainloop()
